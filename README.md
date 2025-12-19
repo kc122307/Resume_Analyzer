@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # AI Resume Intelligence Platform
 
 A comprehensive Django-based platform that leverages AI to analyze resumes, match jobs, build professional resumes, and provide career path recommendations.
