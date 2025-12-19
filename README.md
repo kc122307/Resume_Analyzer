@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # AI Resume Intelligence Platform
 
 A comprehensive Django-based platform that leverages AI to analyze resumes, match jobs, build professional resumes, and provide career path recommendations.
@@ -131,3 +132,6 @@ We prioritize your privacy:
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+=======
+# Resume_Analyzer
+>>>>>>> 3b193869072d22058ea2c17f169fb2efa7a19ae8
