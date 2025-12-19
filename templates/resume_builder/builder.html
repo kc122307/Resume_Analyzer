@@ -1,0 +1,356 @@
+{% extends 'base.html' %}
+
+{% block title %}AI Resume Builder - AI Resume Intelligence Platform{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">AI Resume Builder</h1>
+        <p class="text-gray-600 mt-2">Create a professional resume tailored to your target job</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Builder Form -->
+        <div class="lg:col-span-1 bg-white rounded-xl shadow-md p-6 overflow-y-auto" style="max-height: 85vh;">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Build Your Resume</h2>
+            <p class="text-gray-600 mb-6">Fill in details to generate an ATS-optimized resume.</p>
+            
+            <form id="builder-form" class="space-y-4">
+                {% csrf_token %}
+                
+                <div>
+                    <label for="template_type" class="block text-sm font-medium text-gray-700 mb-1">
+                        Resume Template Style <span class="text-red-500">*</span>
+                    </label>
+                    <select id="template_type" name="template_type" required
+                            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select template</option>
+                        <option value="Cosmic">Cosmic (Modern, bold)</option>
+                        <option value="Nebula">Nebula (Creative but ATS-safe)</option>
+                        <option value="Lunar">Lunar (Minimal, clean)</option>
+                        <option value="Eclipse">Eclipse (Executive, sharp impact)</option>
+                        <option value="Eon">Eon (Timeline-focused)</option>
+                        <option value="Orion">Orion (Technical-heavy)</option>
+                        <option value="Nova">Nova (Fresh graduate)</option>
+                        <option value="Stellar">Stellar (Leadership-driven)</option>
+                        <option value="Quantum">Quantum (Data & metrics)</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="target_company" class="block text-sm font-medium text-gray-700 mb-1">
+                        Target Company
+                    </label>
+                    <input type="text" id="target_company" name="target_company"
+                           class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="e.g., Google, Microsoft">
+                </div>
+                
+                <div>
+                    <label for="target_job_role" class="block text-sm font-medium text-gray-700 mb-1">
+                        Target Job Role <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="target_job_role" name="target_job_role" required
+                           class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="e.g., Senior Software Engineer">
+                </div>
+                
+                <div>
+                    <label for="job_description" class="block text-sm font-medium text-gray-700 mb-1">
+                        Job Description <span class="text-red-500">*</span>
+                    </label>
+                    <textarea id="job_description" name="job_description" rows="4" required
+                              class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="Paste the job description here..."></textarea>
+                </div>
+                
+                <div>
+                    <label for="skills_to_highlight" class="block text-sm font-medium text-gray-700 mb-1">
+                        Skills to Highlight
+                    </label>
+                    <input type="text" id="skills_to_highlight" name="skills_to_highlight"
+                           class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="e.g., Python, React, AWS">
+                </div>
+                
+                <div>
+                    <label for="projects" class="block text-sm font-medium text-gray-700 mb-1">
+                        Projects
+                    </label>
+                    <textarea id="projects" name="projects" rows="3"
+                              class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="List key projects (one per line)"></textarea>
+                </div>
+                
+                <div>
+                    <label for="achievements" class="block text-sm font-medium text-gray-700 mb-1">
+                        Achievements
+                    </label>
+                    <textarea id="achievements" name="achievements" rows="3"
+                              class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="List key achievements"></textarea>
+                </div>
+                
+                <div>
+                    <label for="experience_level" class="block text-sm font-medium text-gray-700 mb-1">
+                        Experience Level <span class="text-red-500">*</span>
+                    </label>
+                    <select id="experience_level" name="experience_level" required
+                            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select experience level</option>
+                        <option value="Entry Level">Entry Level</option>
+                        <option value="Mid Level">Mid Level</option>
+                        <option value="Senior Level">Senior Level</option>
+                        <option value="Executive">Executive</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="additional_notes" class="block text-sm font-medium text-gray-700 mb-1">
+                        Additional Notes
+                    </label>
+                    <textarea id="additional_notes" name="additional_notes" rows="2"
+                              class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="Any additional instructions..."></textarea>
+                </div>
+                
+                <button type="submit" id="generate-btn" class="w-full px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition duration-300">
+                    Generate Resume
+                </button>
+                
+                <div id="loading" class="hidden mt-4 text-center">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                    <p class="mt-2 text-gray-600">Generating your resume...</p>
+                </div>
+            </form>
+        </div>
+
+        <!-- Preview & Download -->
+        <div class="lg:col-span-2">
+            <div id="results-container" class="hidden">
+                <!-- Success Message -->
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <div class="flex items-center justify-center mb-4">
+                        <div class="rounded-full bg-green-100 p-3 mr-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800 text-center mb-2">Resume Generated Successfully!</h2>
+                    <p class="text-gray-600 text-center mb-6">Your AI-powered resume is ready for download.</p>
+                    
+                    <div class="flex justify-center">
+                        <a id="download-link" href="#" 
+                           class="inline-flex items-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition duration-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                            Download Resume
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Resume Preview -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Preview</h2>
+                    <div class="border rounded-lg p-4 bg-gray-50">
+                        <div class="text-center mb-6" id="preview-header">
+                            <h3 class="text-lg font-bold" id="preview-name">Your Name</h3>
+                            <p class="text-gray-600" id="preview-contact">Email: your@email.com | Phone: (123) 456-7890</p>
+                        </div>
+                        
+                        <div class="mb-4" id="preview-summary-section">
+                            <h4 class="font-bold text-gray-800 mb-2">Professional Summary</h4>
+                            <p class="text-gray-600 text-sm" id="preview-summary">Your professional summary will appear here after generation.</p>
+                        </div>
+                        
+                        <div class="mb-4" id="preview-experience-section">
+                            <h4 class="font-bold text-gray-800 mb-2">Work Experience</h4>
+                            <div class="text-sm" id="preview-experience">
+                                <p class="text-gray-600">Your work experience will appear here after generation.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4" id="preview-education-section">
+                            <h4 class="font-bold text-gray-800 mb-2">Education</h4>
+                            <div class="text-sm" id="preview-education">
+                                <p class="text-gray-600">Your education will appear here after generation.</p>
+                            </div>
+                        </div>
+                        
+                        <div id="preview-skills-section">
+                            <h4 class="font-bold text-gray-800 mb-2">Skills</h4>
+                            <p class="text-sm text-gray-600" id="preview-skills">Your skills will appear here after generation.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Initial State -->
+            <div id="initial-state" class="bg-white rounded-xl shadow-md p-12 text-center">
+                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Ready to Build Your Resume</h3>
+                <p class="text-gray-500">Fill out the form with your target job details and click "Generate Resume" to create your AI-powered, personalized resume.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('builder-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const templateType = document.getElementById('template_type').value;
+    const targetCompany = document.getElementById('target_company').value;
+    const targetJobRole = document.getElementById('target_job_role').value;
+    const jobDescription = document.getElementById('job_description').value;
+    const skillsToHighlight = document.getElementById('skills_to_highlight').value;
+    const projects = document.getElementById('projects').value;
+    const achievements = document.getElementById('achievements').value;
+    const experienceLevel = document.getElementById('experience_level').value;
+    const additionalNotes = document.getElementById('additional_notes').value;
+    
+    const btn = document.getElementById('generate-btn');
+    const loading = document.getElementById('loading');
+    const initialState = document.getElementById('initial-state');
+    const resultsContainer = document.getElementById('results-container');
+    
+    if (!templateType || !targetJobRole.trim() || !jobDescription.trim() || !experienceLevel) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    // Show loading, hide button
+    btn.classList.add('hidden');
+    loading.classList.remove('hidden');
+    
+    // Make AJAX request
+    fetch('{% url "generate_resume" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+            'template_type': templateType,
+            'target_company': targetCompany,
+            'target_job_role': targetJobRole,
+            'job_description': jobDescription,
+            'skills_to_highlight': skillsToHighlight,
+            'projects': projects,
+            'achievements': achievements,
+            'experience_level': experienceLevel,
+            'additional_notes': additionalNotes
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.filename) {
+            // Hide loading and initial state
+            loading.classList.add('hidden');
+            initialState.classList.add('hidden');
+            
+            // Show results
+            resultsContainer.classList.remove('hidden');
+            
+            // Set download link
+            const downloadLink = document.getElementById('download-link');
+            downloadLink.href = '{% url "download_resume" filename="PLACEHOLDER" %}'.replace('PLACEHOLDER', data.filename);
+            
+            // Update preview with generated resume data
+            if (data.preview_data) {
+                updatePreview(data.preview_data);
+            }
+        } else {
+            alert('Error: ' + (data.error || 'Unknown error'));
+            btn.classList.remove('hidden');
+            loading.classList.add('hidden');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while generating your resume.');
+        btn.classList.remove('hidden');
+        loading.classList.add('hidden');
+    });
+});
+
+function updatePreview(resumeData) {
+    const pdfResume = resumeData.pdf_resume;
+    
+    // Update header
+    if (pdfResume.header) {
+        document.getElementById('preview-name').textContent = pdfResume.header.name || 'Your Name';
+        document.getElementById('preview-summary').textContent = pdfResume.header.summary || 'Professional summary will appear here.';
+    }
+    
+    // Update skills
+    if (pdfResume.skills && pdfResume.skills.length > 0) {
+        document.getElementById('preview-skills').textContent = pdfResume.skills.join(', ');
+    }
+    
+    // Update experience
+    const experienceContainer = document.getElementById('preview-experience');
+    experienceContainer.innerHTML = '';
+    if (pdfResume.experience && pdfResume.experience.length > 0) {
+        pdfResume.experience.forEach(exp => {
+            const expDiv = document.createElement('div');
+            expDiv.className = 'mb-2';
+            
+            let expText = '';
+            if (exp.role && exp.company) {
+                expText = `<p class="font-medium">${exp.role} - ${exp.company}</p>`;
+            } else if (exp.role) {
+                expText = `<p class="font-medium">${exp.role}</p>`;
+            } else if (exp.company) {
+                expText = `<p class="font-medium">${exp.company}</p>`;
+            }
+            
+            if (exp.duration) {
+                expText += `<p class="text-gray-600">${exp.duration}</p>`;
+            }
+            
+            if (exp.bullets && exp.bullets.length > 0) {
+                exp.bullets.forEach(bullet => {
+                    expText += `<p class="text-gray-600">• ${bullet}</p>`;
+                });
+            }
+            
+            expDiv.innerHTML = expText;
+            experienceContainer.appendChild(expDiv);
+        });
+    }
+    
+    // Update education
+    const educationContainer = document.getElementById('preview-education');
+    educationContainer.innerHTML = '';
+    if (pdfResume.education && pdfResume.education.length > 0) {
+        pdfResume.education.forEach(edu => {
+            const eduDiv = document.createElement('div');
+            eduDiv.className = 'mb-2';
+            
+            let eduText = '';
+            if (edu.degree) {
+                eduText = `<p class="font-medium">${edu.degree}</p>`;
+            }
+            
+            if (edu.institution && edu.year) {
+                eduText += `<p class="text-gray-600">${edu.institution}, ${edu.year}</p>`;
+            } else if (edu.institution) {
+                eduText += `<p class="text-gray-600">${edu.institution}</p>`;
+            } else if (edu.year) {
+                eduText += `<p class="text-gray-600">${edu.year}</p>`;
+            }
+            
+            eduDiv.innerHTML = eduText;
+            educationContainer.appendChild(eduDiv);
+        });
+    }
+}
+</script>
+{% endblock %}

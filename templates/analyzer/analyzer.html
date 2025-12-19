@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Resume Analyzer - AI Resume Intelligence Platform{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">AI Resume Analyzer</h1>
+        <p class="text-gray-600 mt-2">Get detailed insights on your resume with AI-powered analysis</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Analysis Form -->
+        <div class="lg:col-span-1 bg-white rounded-xl shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Analyze Your Resume</h2>
+            <p class="text-gray-600 mb-6">Click the button below to get AI-powered insights on your resume.</p>
+            
+            <div class="mb-6">
+                <div class="flex items-center mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-gray-700">Resume uploaded</span>
+                </div>
+                <div class="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-gray-700">Ready for analysis</span>
+                </div>
+            </div>
+            
+            <!-- Add CSRF token -->
+            {% csrf_token %}
+            
+            <button id="analyze-btn" class="w-full px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition duration-300">
+                Analyze Resume
+            </button>
+            
+            <div id="loading" class="hidden mt-4 text-center">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                <p class="mt-2 text-gray-600">Analyzing your resume...</p>
+            </div>
+        </div>
+
+        <!-- Analysis Results -->
+        <div class="lg:col-span-2">
+            <div id="results-container" class="hidden">
+                <!-- Professional Summary -->
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Professional Summary</h2>
+                    <p id="summary-text" class="text-gray-700 leading-relaxed"></p>
+                </div>
+
+                <!-- ATS Score -->
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">ATS Compatibility Score</h2>
+                    <div class="flex items-center justify-center">
+                        <div class="relative">
+                            <svg class="w-48 h-48" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+                                <circle id="score-circle" cx="50" cy="50" r="45" fill="none" stroke="#3b82f6" stroke-width="8" 
+                                        stroke-dasharray="283" stroke-dashoffset="0" transform="rotate(-90 50 50)"/>
+                                <text x="50" y="50" text-anchor="middle" dy="7" font-size="20" font-weight="bold" fill="#3b82f6">0%</text>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Industry-Specific Scores -->
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Industry-Specific Score Analysis</h2>
+                    <div class="space-y-4" id="industry-scores">
+                        <!-- Industry scores will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Best Programming Languages -->
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">💻 Best Programming Languages Found</h2>
+                    <div id="programming-languages" class="flex flex-wrap gap-3">
+                        <!-- Programming languages will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Strengths -->
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">💪 Strengths</h2>
+                    <ul id="strengths-list" class="space-y-3">
+                        <!-- Strengths will be populated here -->
+                    </ul>
+                </div>
+
+                <!-- Weaknesses -->
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">⚠️ Areas for Improvement</h2>
+                    <ul id="weaknesses-list" class="space-y-3">
+                        <!-- Weaknesses will be populated here -->
+                    </ul>
+                </div>
+
+                <!-- Missing Elements -->
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">📋 Missing Critical Elements</h2>
+                    <ul id="missing-list" class="space-y-3">
+                        <!-- Missing elements will be populated here -->
+                    </ul>
+                </div>
+
+                <!-- Suggestions -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">💡 Actionable Suggestions</h2>
+                    <ul id="suggestions-list" class="space-y-3">
+                        <!-- Suggestions will be populated here -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Initial State -->
+            <div id="initial-state" class="bg-white rounded-xl shadow-md p-12 text-center">
+                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Ready to Analyze</h3>
+                <p class="text-gray-500">Click the "Analyze Resume" button to get AI-powered insights on your resume.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('analyze-btn').addEventListener('click', function() {
+    const btn = this;
+    const loading = document.getElementById('loading');
+    const initialState = document.getElementById('initial-state');
+    const resultsContainer = document.getElementById('results-container');
+    
+    // Show loading, hide button
+    btn.classList.add('hidden');
+    loading.classList.remove('hidden');
+    
+    // Get CSRF token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    // Make AJAX request
+    fetch('{% url "analyze_resume" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/json'
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Received data:', data);
+        
+        if (data.analysis) {
+            console.log('Analysis data found:', data.analysis);
+            // Hide loading and initial state
+            loading.classList.add('hidden');
+            initialState.classList.add('hidden');
+            
+            // Show results
+            resultsContainer.classList.remove('hidden');
+            
+            // Update professional summary
+            if (data.analysis.summary) {
+                document.getElementById('summary-text').textContent = data.analysis.summary;
+            }
+            
+            // Update ATS score
+            const score = data.analysis.ats_score;
+            document.querySelector('#score-circle').style.strokeDashoffset = 283 - (283 * score / 100);
+            document.querySelector('#score-circle + text').textContent = score + '%';
+            
+            // Populate industry scores
+            if (data.analysis.industry_scores) {
+                const industryScores = document.getElementById('industry-scores');
+                industryScores.innerHTML = '';
+                Object.entries(data.analysis.industry_scores).forEach(([industry, score]) => {
+                    const div = document.createElement('div');
+                    div.innerHTML = `
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-gray-700 font-medium">${industry}</span>
+                            <span class="text-gray-600 font-semibold">${score}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div class="bg-blue-600 h-2.5 rounded-full" style="width: ${score}%"></div>
+                        </div>
+                    `;
+                    industryScores.appendChild(div);
+                });
+            }
+            
+            // Populate best programming languages
+            if (data.analysis.best_programming_languages) {
+                const programmingLanguages = document.getElementById('programming-languages');
+                programmingLanguages.innerHTML = '';
+                data.analysis.best_programming_languages.forEach(language => {
+                    const span = document.createElement('span');
+                    span.className = 'px-4 py-2 bg-indigo-100 text-indigo-800 rounded-full text-sm font-semibold';
+                    span.textContent = language;
+                    programmingLanguages.appendChild(span);
+                });
+            }
+            
+            // Populate strengths
+            const strengthsList = document.getElementById('strengths-list');
+            strengthsList.innerHTML = '';
+            if (data.analysis.strengths) {
+                data.analysis.strengths.forEach(strength => {
+                    const li = document.createElement('li');
+                    li.className = 'flex items-start';
+                    li.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="text-gray-700">${strength}</span>
+                    `;
+                    strengthsList.appendChild(li);
+                });
+            }
+            
+            // Populate weaknesses
+            const weaknessesList = document.getElementById('weaknesses-list');
+            weaknessesList.innerHTML = '';
+            if (data.analysis.weaknesses) {
+                data.analysis.weaknesses.forEach(weakness => {
+                    const li = document.createElement('li');
+                    li.className = 'flex items-start';
+                    li.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="text-gray-700">${weakness}</span>
+                    `;
+                    weaknessesList.appendChild(li);
+                });
+            }
+            
+            // Populate missing elements
+            const missingList = document.getElementById('missing-list');
+            missingList.innerHTML = '';
+            if (data.analysis.missing_elements) {
+                data.analysis.missing_elements.forEach(missing => {
+                    const li = document.createElement('li');
+                    li.className = 'flex items-start';
+                    li.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="text-gray-700">${missing}</span>
+                    `;
+                    missingList.appendChild(li);
+                });
+            }
+            
+            // Populate suggestions
+            const suggestionsList = document.getElementById('suggestions-list');
+            suggestionsList.innerHTML = '';
+            if (data.analysis.suggestions) {
+                data.analysis.suggestions.forEach(suggestion => {
+                    const li = document.createElement('li');
+                    li.className = 'flex items-start';
+                    li.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500 mr-2 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                            <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="text-gray-700">${suggestion}</span>
+                    `;
+                    suggestionsList.appendChild(li);
+                });
+            }
+        } else {
+            // Show error message
+            const errorMsg = data.error || 'Unknown error occurred';
+            console.error('Analysis error:', errorMsg);
+            
+            // Display error in a more user-friendly way
+            alert('Error analyzing resume: ' + errorMsg);
+            btn.classList.remove('hidden');
+            loading.classList.add('hidden');
+        }
+    })
+    .catch(error => {
+        console.error('Network error:', error);
+        alert('Network error: Unable to connect to the server. Please check your connection and try again.');
+        btn.classList.remove('hidden');
+        loading.classList.add('hidden');
+    });
+});
+</script>
+{% endblock %}

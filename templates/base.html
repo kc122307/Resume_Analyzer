@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AI Resume Intelligence Platform{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="flex justify-between">
+                <div class="flex space-x-7">
+                    <div>
+                        <a href="{% url 'home' %}" class="flex items-center py-4 px-2">
+                            <span class="font-semibold text-gray-800 text-lg">AI Resume Platform</span>
+                        </a>
+                    </div>
+                    <!-- Primary Navbar items -->
+                    <div class="hidden md:flex items-center space-x-1">
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'dashboard' %}" class="py-4 px-2 text-gray-700 hover:text-blue-500 transition duration-300">Dashboard</a>
+                            <a href="{% url 'analyzer' %}" class="py-4 px-2 text-gray-700 hover:text-blue-500 transition duration-300">Analyzer</a>
+                            <a href="{% url 'jobs_home' %}" class="py-4 px-2 text-gray-700 hover:text-blue-500 transition duration-300">Jobs</a>
+                            <a href="{% url 'job_match' %}" class="py-4 px-2 text-gray-700 hover:text-blue-500 transition duration-300">Job Matching</a>
+                            <a href="{% url 'builder' %}" class="py-4 px-2 text-gray-700 hover:text-blue-500 transition duration-300">Resume Builder</a>
+                            <a href="{% url 'career_path' %}" class="py-4 px-2 text-gray-700 hover:text-blue-500 transition duration-300">Career Path</a>
+                        {% endif %}
+                    </div>
+                </div>
+                <!-- Secondary Navbar items -->
+                <div class="hidden md:flex items-center space-x-3">
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'profile' %}" class="py-2 px-2 font-medium text-gray-700 rounded hover:bg-blue-500 hover:text-white transition duration-300">Profile</a>
+                        <a href="{% url 'settings' %}" class="py-2 px-2 font-medium text-gray-700 rounded hover:bg-blue-500 hover:text-white transition duration-300">Settings</a>
+                        <a href="{% url 'logout' %}" class="py-2 px-2 font-medium text-white bg-blue-500 rounded hover:bg-blue-400 transition duration-300">Logout</a>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="py-2 px-2 font-medium text-gray-700 rounded hover:bg-blue-500 hover:text-white transition duration-300">Log In</a>
+                        <a href="{% url 'signup' %}" class="py-2 px-2 font-medium text-white bg-blue-500 rounded hover:bg-blue-400 transition duration-300">Sign Up</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-4 py-8">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="mb-4 p-4 rounded {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t mt-12">
+        <div class="max-w-6xl mx-auto px-4 py-6">
+            <p class="text-center text-gray-600">© 2025 AI Resume Intelligence Platform. All rights reserved.</p>
+        </div>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

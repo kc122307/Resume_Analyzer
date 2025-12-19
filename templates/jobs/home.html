@@ -1,0 +1,343 @@
+{% extends 'base.html' %}
+
+{% block title %}Jobs - AI Resume Intelligence Platform{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">Job Listings</h1>
+        <p class="text-gray-600 mt-2">Browse the latest job opportunities and match them with your resume</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <!-- Search Filters -->
+        <div class="lg:col-span-1 bg-white rounded-xl shadow-md p-6 h-fit">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Search Filters</h2>
+            
+            <form id="job-search-form" class="space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label for="keywords" class="block text-sm font-medium text-gray-700 mb-1">
+                        Keywords
+                    </label>
+                    <input type="text" id="keywords" name="keywords"
+                           class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="e.g., software engineer">
+                </div>
+                
+                <div>
+                    <label for="location" class="block text-sm font-medium text-gray-700 mb-1">
+                        Location
+                    </label>
+                    <input type="text" id="location" name="location"
+                           class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="e.g., Chicago, IL">
+                </div>
+                
+                <div>
+                    <label for="job_type" class="block text-sm font-medium text-gray-700 mb-1">
+                        Job Type
+                    </label>
+                    <select id="job_type" name="job_type"
+                            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">All Types</option>
+                        <option value="fulltime">Full-time</option>
+                        <option value="parttime">Part-time</option>
+                        <option value="contractor">Contractor</option>
+                        <option value="intern">Internship</option>
+                    </select>
+                </div>
+                
+                <button type="submit" id="search-btn" class="w-full px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition duration-300">
+                    Search Jobs
+                </button>
+                
+                <div id="search-loading" class="hidden mt-2 text-center">
+                    <div class="inline-block animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-blue-500"></div>
+                </div>
+            </form>
+            
+            {% if using_mock_data %}
+            <div class="mt-6 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p class="text-sm text-yellow-800">
+                    <strong>Note:</strong> Displaying sample job data. 
+                    <a href="https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch" target="_blank" class="underline">Subscribe to JSearch API</a> 
+                    for real-time job listings.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Job Listings -->
+        <div class="lg:col-span-3">
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-gray-800">Featured Jobs</h2>
+                    <span class="text-sm text-gray-500">{{ featured_jobs|length }} jobs</span>
+                </div>
+                
+                {% if using_mock_data %}
+                <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p class="text-sm text-yellow-800">
+                        <strong>Sample Data:</strong> Showing mock job listings. Real API data will appear here when available.
+                    </p>
+                </div>
+                {% endif %}
+                
+                <div class="space-y-6">
+                    {% if featured_jobs %}
+                        {% for job in featured_jobs %}
+                        <!-- Job Card -->
+                        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition duration-300">
+                            <div class="flex justify-between">
+                                <h3 class="text-lg font-semibold text-gray-900">{{ job.job_title }}</h3>
+                                <span class="px-2 py-1 {% if job.job_employment_type == 'FULLTIME' %}bg-green-100 text-green-800{% else %}bg-purple-100 text-purple-800{% endif %} text-xs font-medium rounded">{{ job.job_employment_type|title }}</span>
+                            </div>
+                            <p class="text-gray-600">{{ job.employer_name }}</p>
+                            <p class="text-gray-500 text-sm mt-1">{{ job.job_city }}, {{ job.job_state }}{% if job.job_is_remote %} • Remote{% endif %}</p>
+                            <p class="text-gray-700 mt-2">{{ job.job_description|truncatewords:20 }}</p>
+                            <div class="mt-3 flex flex-wrap gap-2">
+                                {% for skill in job.job_required_skills %}
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">{{ skill }}</span>
+                                {% endfor %}
+                            </div>
+                            <div class="mt-4 flex justify-between items-center">
+                                <button class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition duration-300 match-job-btn" 
+                                        data-job-title="{{ job.job_title }}"
+                                        data-job-description="{{ job.job_description }}"
+                                        data-job-employment-type="{{ job.job_employment_type }}"
+                                        data-employer-name="{{ job.employer_name }}"
+                                        data-job-city="{{ job.job_city }}"
+                                        data-job-state="{{ job.job_state }}">
+                                    Match with My Resume
+                                </button>
+                                <button class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition duration-300 apply-now-btn" data-job-url="{{ job.job_apply_link|default:'#' }}">
+                                    Apply Now
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-8">
+                            <p class="text-gray-500">Unable to fetch job listings at the moment. Please try again later.</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mt-6 text-center">
+                    <button class="px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition duration-300">
+                        Load More Jobs
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Wait for DOM to be fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if job search form exists
+    const jobSearchForm = document.getElementById('job-search-form');
+    if (jobSearchForm) {
+        jobSearchForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const keywords = document.getElementById('keywords').value;
+            const location = document.getElementById('location').value;
+            const jobType = document.getElementById('job_type').value;
+            const searchBtn = document.getElementById('search-btn');
+            const searchLoading = document.getElementById('search-loading');
+            
+            // Show loading indicator
+            searchBtn.disabled = true;
+            searchBtn.textContent = 'Searching...';
+            searchLoading.classList.remove('hidden');
+            
+            // Make AJAX request
+            fetch('', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({
+                    'keywords': keywords,
+                    'location': location,
+                    'job_type': jobType
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Update job listings
+                const jobListingsContainer = document.querySelector('.space-y-6');
+                jobListingsContainer.innerHTML = '';
+                
+                if (data.jobs && data.jobs.length > 0) {
+                    data.jobs.forEach(job => {
+                        const jobCard = createJobCard(job);
+                        jobListingsContainer.appendChild(jobCard);
+                    });
+                } else {
+                    jobListingsContainer.innerHTML = '<p class="text-center text-gray-500 py-8">No jobs found matching your criteria.</p>';
+                }
+                
+                // Reset button
+                searchBtn.disabled = false;
+                searchBtn.textContent = 'Search Jobs';
+                searchLoading.classList.add('hidden');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while searching for jobs.');
+                
+                // Reset button
+                searchBtn.disabled = false;
+                searchBtn.textContent = 'Search Jobs';
+                searchLoading.classList.add('hidden');
+            });
+        });
+    }
+
+    // Add event listener for Apply Now buttons (using event delegation)
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('apply-now-btn')) {
+            const jobUrl = e.target.getAttribute('data-job-url');
+            if (jobUrl && jobUrl !== '#') {
+                window.open(jobUrl, '_blank');
+            } else {
+                alert('Application link not available for this job.');
+            }
+        }
+    });
+
+    // Add event listener for Match buttons (using event delegation)
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('match-job-btn')) {
+            // Prevent default behavior
+            e.preventDefault();
+            
+            // Show loading indicator
+            const matchBtn = e.target;
+            const originalText = matchBtn.textContent;
+            matchBtn.disabled = true;
+            matchBtn.textContent = 'Matching...';
+            
+            // Get job data from attributes
+            const jobTitle = matchBtn.getAttribute('data-job-title');
+            const jobDescription = matchBtn.getAttribute('data-job-description');
+            const jobEmploymentType = matchBtn.getAttribute('data-job-employment-type');
+            const employerName = matchBtn.getAttribute('data-employer-name');
+            const jobCity = matchBtn.getAttribute('data-job-city');
+            const jobState = matchBtn.getAttribute('data-job-state');
+            
+            // Create form data to submit to job matching
+            const formData = new FormData();
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+            formData.append('job_title', jobTitle);
+            formData.append('job_description', jobDescription);
+            formData.append('job_employment_type', jobEmploymentType);
+            formData.append('employer_name', employerName);
+            formData.append('job_city', jobCity);
+            formData.append('job_state', jobState);
+            
+            // Submit form via AJAX to match job directly
+            // Fixed URL to match the correct Django URL pattern
+            fetch('/job-match/match-direct/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.match) {
+                    // Store match result in sessionStorage and redirect to results page
+                    sessionStorage.setItem('jobMatchResult', JSON.stringify(data.match));
+                    window.location.href = '/job-match/#results';
+                } else {
+                    alert('Error matching job: ' + (data.error || 'Unknown error'));
+                    matchBtn.disabled = false;
+                    matchBtn.textContent = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while matching the job.');
+                matchBtn.disabled = false;
+                matchBtn.textContent = originalText;
+            });
+        }
+    });
+
+    // Add event listener for Load More Jobs button
+    const loadMoreBtn = document.querySelector('.mt-6.text-center button');
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', function() {
+            // For now, we'll just show an alert since we don't have pagination implemented
+            // In a real implementation, this would load more jobs from the API
+            alert('In a full implementation, this would load more jobs. For now, try using the search filters above.');
+        });
+    }
+});
+
+function createJobCard(job) {
+    const jobCard = document.createElement('div');
+    jobCard.className = 'border border-gray-200 rounded-lg p-4 hover:shadow-md transition duration-300';
+    
+    // Employment type styling
+    let employmentTypeClass = 'bg-purple-100 text-purple-800';
+    if (job.job_employment_type === 'FULLTIME') {
+        employmentTypeClass = 'bg-green-100 text-green-800';
+    }
+    
+    // Location
+    let locationText = '';
+    if (job.job_city && job.job_state) {
+        locationText = `${job.job_city}, ${job.job_state}`;
+    } else if (job.job_city) {
+        locationText = job.job_city;
+    } else if (job.job_state) {
+        locationText = job.job_state;
+    }
+    
+    // Description
+    let description = job.job_description || 'No description available';
+    if (description.length > 150) {
+        description = description.substring(0, 150) + '...';
+    }
+    
+    jobCard.innerHTML = `
+        <div class="flex justify-between">
+            <h3 class="text-lg font-semibold text-gray-900">${job.job_title || 'Untitled Position'}</h3>
+            <span class="px-2 py-1 ${employmentTypeClass} text-xs font-medium rounded">${job.job_employment_type ? job.job_employment_type.replace('_', '-').toUpperCase() : 'UNSPECIFIED'}</span>
+        </div>
+        <p class="text-gray-600">${job.employer_name || 'Employer not specified'}</p>
+        <p class="text-gray-500 text-sm mt-1">${locationText}${job.job_is_remote ? ' • Remote' : ''}</p>
+        <p class="text-gray-700 mt-2">${description}</p>
+        <div class="mt-3 flex flex-wrap gap-2">
+            ${(job.job_required_skills || []).map(skill => 
+                `<span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">${skill}</span>`
+            ).join('')}
+        </div>
+        <div class="mt-4 flex justify-between items-center">
+            <button class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition duration-300 match-job-btn" 
+                    data-job-title="${job.job_title || ''}"
+                    data-job-description="${job.job_description || ''}"
+                    data-job-employment-type="${job.job_employment_type || ''}"
+                    data-employer-name="${job.employer_name || ''}"
+                    data-job-city="${job.job_city || ''}"
+                    data-job-state="${job.job_state || ''}">
+                Match with My Resume
+            </button>
+            <button class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition duration-300 apply-now-btn" data-job-url="${job.job_apply_link || '#'}">
+                Apply Now
+            </button>
+        </div>
+    `;
+    
+    return jobCard;
+}
+</script>
+{% endblock %}

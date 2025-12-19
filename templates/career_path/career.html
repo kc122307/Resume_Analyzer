@@ -1,0 +1,319 @@
+{% extends 'base.html' %}
+
+{% block title %}Career Path Planner - AI Resume Intelligence Platform{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">Career Path Planner</h1>
+        <p class="text-gray-600 mt-2">Get personalized career recommendations based on your skills and experience</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Career Planning Form -->
+        <div class="lg:col-span-1 bg-white rounded-xl shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Build Your Skills</h2>
+            <p class="text-gray-600 mb-6">Get personalized learning roadmap and skill development plan.</p>
+            
+            <form id="career-form" class="space-y-4">
+                {% csrf_token %}
+                
+                <div>
+                    <label for="career_goal" class="block text-sm font-medium text-gray-700 mb-1">
+                        Career Aim / Goal <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="career_goal" name="career_goal" required
+                           class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="e.g., Master Data Science & AI">
+                </div>
+                
+                <div>
+                    <label for="timeframe" class="block text-sm font-medium text-gray-700 mb-1">
+                        Target Timeframe <span class="text-red-500">*</span>
+                    </label>
+                    <select id="timeframe" name="timeframe" required
+                            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select timeframe</option>
+                        <option value="3 months">3 months</option>
+                        <option value="6 months">6 months</option>
+                        <option value="1 year">1 year</option>
+                        <option value="2 years">2 years</option>
+                        <option value="3+ years">3+ years</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="preferred_industry" class="block text-sm font-medium text-gray-700 mb-1">
+                        Preferred Industry / Domain <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="preferred_industry" name="preferred_industry" required
+                           class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="e.g., AI/ML, Web Development, Cloud">
+                </div>
+                
+                <div>
+                    <label for="current_skill_level" class="block text-sm font-medium text-gray-700 mb-1">
+                        Current Skill Level <span class="text-red-500">*</span>
+                    </label>
+                    <select id="current_skill_level" name="current_skill_level" required
+                            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select skill level</option>
+                        <option value="Beginner">Beginner</option>
+                        <option value="Intermediate">Intermediate</option>
+                        <option value="Advanced">Advanced</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="learning_commitment" class="block text-sm font-medium text-gray-700 mb-1">
+                        Learning Commitment (hours/week) <span class="text-red-500">*</span>
+                    </label>
+                    <select id="learning_commitment" name="learning_commitment" required
+                            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select hours</option>
+                        <option value="5-10 hours">5-10 hours</option>
+                        <option value="10-15 hours">10-15 hours</option>
+                        <option value="15-20 hours">15-20 hours</option>
+                        <option value="20+ hours">20+ hours</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="target_outcome" class="block text-sm font-medium text-gray-700 mb-1">
+                        Target Outcome <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="target_outcome" name="target_outcome" required
+                           class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="e.g., Skill mastery, Freelancing, Startup">
+                </div>
+                
+                <button type="submit" id="plan-btn" class="w-full px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition duration-300">
+                    Generate Learning Plan
+                </button>
+                
+                <div id="loading" class="hidden mt-4 text-center">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                    <p class="mt-2 text-gray-600">Creating your learning plan...</p>
+                </div>
+            </form>
+        </div>
+
+        <!-- Career Plan Results -->
+        <div class="lg:col-span-2">
+            <div id="results-container" class="hidden">
+                <!-- Goal Clarity -->
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">🎯 Goal Clarity</h2>
+                    <p id="goal-clarity" class="text-gray-700"></p>
+                </div>
+
+                <!-- Skill Gap Analysis -->
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">📊 Skill Gap Analysis</h2>
+                    <div id="skill-gaps" class="flex flex-wrap gap-2">
+                        <!-- Skill gaps will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Learning Roadmap -->
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">🗺️ Learning Roadmap</h2>
+                    <div id="learning-roadmap" class="space-y-6">
+                        <!-- Learning roadmap will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Projects to Build -->
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">🛠️ Projects to Build</h2>
+                    <ul id="projects-list" class="space-y-3">
+                        <!-- Projects will be populated here -->
+                    </ul>
+                </div>
+
+                <!-- Daily/Weekly Habits -->
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">📆 Daily & Weekly Habits</h2>
+                    <ul id="habits-list" class="space-y-3">
+                        <!-- Habits will be populated here -->
+                    </ul>
+                </div>
+
+                <!-- Recommended Certifications -->
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">🎓 Recommended Certifications</h2>
+                    <ul id="certifications-list" class="space-y-2">
+                        <!-- Certifications will be populated here -->
+                    </ul>
+                </div>
+
+                <!-- Final Guidance -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">🌟 Final Guidance</h2>
+                    <p id="final-guidance" class="text-gray-700 italic"></p>
+                </div>
+            </div>
+
+            <!-- Initial State -->
+            <div id="initial-state" class="bg-white rounded-xl shadow-md p-12 text-center">
+                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Ready to Plan</h3>
+                <p class="text-gray-500">Fill out the form and click "Plan Career Path" to get personalized recommendations.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('career-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const careerGoal = document.getElementById('career_goal').value;
+    const timeframe = document.getElementById('timeframe').value;
+    const preferredIndustry = document.getElementById('preferred_industry').value;
+    const currentSkillLevel = document.getElementById('current_skill_level').value;
+    const learningCommitment = document.getElementById('learning_commitment').value;
+    const targetOutcome = document.getElementById('target_outcome').value;
+    const btn = document.getElementById('plan-btn');
+    const loading = document.getElementById('loading');
+    const initialState = document.getElementById('initial-state');
+    const resultsContainer = document.getElementById('results-container');
+    
+    if (!careerGoal.trim() || !timeframe || !preferredIndustry.trim() || !currentSkillLevel || !learningCommitment || !targetOutcome.trim()) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    // Show loading, hide button
+    btn.classList.add('hidden');
+    loading.classList.remove('hidden');
+    
+    // Make AJAX request
+    fetch('{% url "plan_career" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+            'career_goal': careerGoal,
+            'timeframe': timeframe,
+            'preferred_industry': preferredIndustry,
+            'current_skill_level': currentSkillLevel,
+            'learning_commitment': learningCommitment,
+            'target_outcome': targetOutcome
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.career_plan) {
+            // Hide loading and initial state
+            loading.classList.add('hidden');
+            initialState.classList.add('hidden');
+            
+            // Show results
+            resultsContainer.classList.remove('hidden');
+            
+            // Populate goal clarity
+            document.getElementById('goal-clarity').textContent = data.career_plan.goal_clarity;
+            
+            // Populate skill gaps
+            const skillGaps = document.getElementById('skill-gaps');
+            skillGaps.innerHTML = '';
+            data.career_plan.skill_gap_analysis.forEach(gap => {
+                const span = document.createElement('span');
+                span.className = 'px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium';
+                span.textContent = gap;
+                skillGaps.appendChild(span);
+            });
+            
+            // Populate learning roadmap
+            const learningRoadmap = document.getElementById('learning-roadmap');
+            learningRoadmap.innerHTML = '';
+            data.career_plan.learning_roadmap.forEach(phase => {
+                const div = document.createElement('div');
+                div.className = 'border-l-4 border-blue-500 pl-4 pb-4';
+                div.innerHTML = `
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">${phase.phase}</h3>
+                    <p class="text-blue-600 font-medium mb-3">Focus: ${phase.focus}</p>
+                    <h4 class="font-medium text-gray-800 mb-2">Actions:</h4>
+                    <ul class="space-y-1">
+                        ${phase.actions.map(action => `
+                            <li class="flex items-start">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                                <span class="text-gray-600 text-sm">${action}</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                `;
+                learningRoadmap.appendChild(div);
+            });
+            
+            // Populate projects
+            const projectsList = document.getElementById('projects-list');
+            projectsList.innerHTML = '';
+            data.career_plan.projects_to_build.forEach(project => {
+                const li = document.createElement('li');
+                li.className = 'flex items-start';
+                li.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-500 mr-2 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-gray-700">${project}</span>
+                `;
+                projectsList.appendChild(li);
+            });
+            
+            // Populate habits
+            const habitsList = document.getElementById('habits-list');
+            habitsList.innerHTML = '';
+            data.career_plan.daily_weekly_habits.forEach(habit => {
+                const li = document.createElement('li');
+                li.className = 'flex items-start';
+                li.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500 mr-2 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-gray-700">${habit}</span>
+                `;
+                habitsList.appendChild(li);
+            });
+            
+            // Populate certifications
+            const certificationsList = document.getElementById('certifications-list');
+            certificationsList.innerHTML = '';
+            data.career_plan.recommended_certifications.forEach(cert => {
+                const li = document.createElement('li');
+                li.className = 'flex items-start';
+                li.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-gray-700">${cert}</span>
+                `;
+                certificationsList.appendChild(li);
+            });
+            
+            // Populate final guidance
+            document.getElementById('final-guidance').textContent = data.career_plan.final_guidance;
+        } else {
+            alert('Error: ' + (data.error || 'Unknown error'));
+            btn.classList.remove('hidden');
+            loading.classList.add('hidden');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while creating your learning plan.');
+        btn.classList.remove('hidden');
+        loading.classList.add('hidden');
+    });
+});
+</script>
+{% endblock %}

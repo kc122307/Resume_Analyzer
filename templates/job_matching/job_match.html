@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+
+{% block title %}Job Matching - AI Resume Intelligence Platform{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">Job Matching</h1>
+        <p class="text-gray-600 mt-2">Match your resume against job descriptions to see how well you fit</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Job Description Form -->
+        <div class="lg:col-span-1 bg-white rounded-xl shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Job Details</h2>
+            <p class="text-gray-600 mb-6">Enter job information to match against your resume.</p>
+            
+            <form id="job-match-form" class="space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label for="job_title" class="block text-sm font-medium text-gray-700 mb-1">
+                        Job Title <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="job_title" name="job_title" required
+                           class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="e.g., Senior Software Engineer">
+                </div>
+                
+                <div>
+                    <label for="company" class="block text-sm font-medium text-gray-700 mb-1">
+                        Company
+                    </label>
+                    <input type="text" id="company" name="company"
+                           class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="e.g., Google, Microsoft">
+                </div>
+                
+                <div>
+                    <label for="job_level" class="block text-sm font-medium text-gray-700 mb-1">
+                        Job Level
+                    </label>
+                    <select id="job_level" name="job_level"
+                            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select level</option>
+                        <option value="Entry Level">Entry Level</option>
+                        <option value="Junior">Junior</option>
+                        <option value="Mid-Level">Mid-Level</option>
+                        <option value="Senior">Senior</option>
+                        <option value="Lead">Lead</option>
+                        <option value="Principal">Principal</option>
+                        <option value="Manager">Manager</option>
+                        <option value="Director">Director</option>
+                        <option value="VP">VP</option>
+                        <option value="C-Level">C-Level</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="salary" class="block text-sm font-medium text-gray-700 mb-1">
+                        Salary Range
+                    </label>
+                    <input type="text" id="salary" name="salary"
+                           class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="e.g., $80k - $120k">
+                </div>
+                
+                <div>
+                    <label for="job_description" class="block text-sm font-medium text-gray-700 mb-1">
+                        Job Description <span class="text-red-500">*</span>
+                    </label>
+                    <textarea id="job_description" name="job_description" rows="8" required
+                              class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="Paste the job description here..."></textarea>
+                </div>
+                
+                <button type="submit" id="match-btn" class="w-full px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition duration-300">
+                    Match Against Resume
+                </button>
+                
+                <div id="loading" class="hidden mt-4 text-center">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                    <p class="mt-2 text-gray-600">Matching your resume...</p>
+                </div>
+            </form>
+        </div>
+
+        <!-- Match Results -->
+        <div class="lg:col-span-2">
+            <div id="results-container" class="hidden">
+                <!-- Match Score -->
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Match Percentage</h2>
+                    <div class="flex items-center justify-center">
+                        <div class="relative">
+                            <svg class="w-48 h-48" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+                                <circle id="match-circle" cx="50" cy="50" r="45" fill="none" stroke="#10b981" stroke-width="8" 
+                                        stroke-dasharray="283" stroke-dashoffset="0" transform="rotate(-90 50 50)"/>
+                                <text x="50" y="50" text-anchor="middle" dy="7" font-size="20" font-weight="bold" fill="#10b981">0%</text>
+                            </svg>
+                        </div>
+                    </div>
+                    <p class="text-center text-gray-600 mt-4" id="summary-overview"></p>
+                </div>
+
+                <!-- Final Verdict -->
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Final Verdict</h2>
+                    <p id="final-verdict" class="text-lg text-gray-700 italic"></p>
+                </div>
+
+                <!-- Strength Alignment -->
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Strength Alignment</h2>
+                    <ul id="strength-alignment" class="space-y-3">
+                        <!-- Strength alignment will be populated here -->
+                    </ul>
+                </div>
+
+                <!-- Missing Skills -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Missing Skills</h2>
+                    <div id="missing-skills" class="flex flex-wrap gap-2">
+                        <!-- Missing skills will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Initial State -->
+            <div id="initial-state" class="bg-white rounded-xl shadow-md p-12 text-center">
+                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Ready to Match</h3>
+                <p class="text-gray-500">Paste a job description and click "Match Against Resume" to see how well you fit.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Check if we have match results from sessionStorage (from jobs page)
+document.addEventListener('DOMContentLoaded', function() {
+    // Check for match results from jobs page
+    const matchResult = sessionStorage.getItem('jobMatchResult');
+    if (matchResult) {
+        try {
+            const data = JSON.parse(matchResult);
+            displayMatchResults(data);
+            // Clear the sessionStorage so it doesn't show again on refresh
+            sessionStorage.removeItem('jobMatchResult');
+        } catch (e) {
+            console.error('Error parsing match result:', e);
+        }
+    }
+});
+
+function displayMatchResults(data) {
+    // Hide initial state
+    document.getElementById('initial-state').classList.add('hidden');
+    
+    // Show results
+    const resultsContainer = document.getElementById('results-container');
+    resultsContainer.classList.remove('hidden');
+    
+    // Update match percentage
+    const score = data.match_percentage;
+    document.querySelector('#match-circle').style.strokeDashoffset = 283 - (283 * score / 100);
+    document.querySelector('#match-circle + text').textContent = score + '%';
+    
+    // Update summary overview
+    document.getElementById('summary-overview').textContent = data.summary_overview;
+    
+    // Update final verdict
+    document.getElementById('final-verdict').textContent = data.final_verdict;
+    
+    // Populate strength alignment
+    const strengthAlignment = document.getElementById('strength-alignment');
+    strengthAlignment.innerHTML = '';
+    data.strength_alignment.forEach(point => {
+        const li = document.createElement('li');
+        li.className = 'flex items-start';
+        li.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+            </svg>
+            <span class="text-gray-700">${point}</span>
+        `;
+        strengthAlignment.appendChild(li);
+    });
+    
+    // Populate missing skills
+    const missingSkills = document.getElementById('missing-skills');
+    missingSkills.innerHTML = '';
+    data.missing_skills.forEach(skill => {
+        const span = document.createElement('span');
+        span.className = 'px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium';
+        span.textContent = skill;
+        missingSkills.appendChild(span);
+    });
+}
+
+document.getElementById('job-match-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const jobTitle = document.getElementById('job_title').value;
+    const company = document.getElementById('company').value;
+    const jobLevel = document.getElementById('job_level').value;
+    const salary = document.getElementById('salary').value;
+    const jobDescription = document.getElementById('job_description').value;
+    const btn = document.getElementById('match-btn');
+    const loading = document.getElementById('loading');
+    const initialState = document.getElementById('initial-state');
+    const resultsContainer = document.getElementById('results-container');
+    
+    if (!jobTitle.trim() || !jobDescription.trim()) {
+        alert('Please enter job title and description');
+        return;
+    }
+    
+    // Show loading, hide button
+    btn.classList.add('hidden');
+    loading.classList.remove('hidden');
+    
+    // Make AJAX request
+    fetch('{% url "match_job" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+            'job_title': jobTitle,
+            'company': company,
+            'job_level': jobLevel,
+            'salary': salary,
+            'job_description': jobDescription
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.match) {
+            // Hide loading and initial state
+            loading.classList.add('hidden');
+            initialState.classList.add('hidden');
+            
+            // Show results
+            resultsContainer.classList.remove('hidden');
+            
+            // Update match percentage
+            const score = data.match.match_percentage;
+            document.querySelector('#match-circle').style.strokeDashoffset = 283 - (283 * score / 100);
+            document.querySelector('#match-circle + text').textContent = score + '%';
+            
+            // Update summary overview
+            document.getElementById('summary-overview').textContent = data.match.summary_overview;
+            
+            // Update final verdict
+            document.getElementById('final-verdict').textContent = data.match.final_verdict;
+            
+            // Populate strength alignment
+            const strengthAlignment = document.getElementById('strength-alignment');
+            strengthAlignment.innerHTML = '';
+            data.match.strength_alignment.forEach(point => {
+                const li = document.createElement('li');
+                li.className = 'flex items-start';
+                li.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-gray-700">${point}</span>
+                `;
+                strengthAlignment.appendChild(li);
+            });
+            
+            // Populate missing skills
+            const missingSkills = document.getElementById('missing-skills');
+            missingSkills.innerHTML = '';
+            data.match.missing_skills.forEach(skill => {
+                const span = document.createElement('span');
+                span.className = 'px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium';
+                span.textContent = skill;
+                missingSkills.appendChild(span);
+            });
+        } else {
+            alert('Error: ' + (data.error || 'Unknown error'));
+            btn.classList.remove('hidden');
+            loading.classList.add('hidden');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while matching your resume.');
+        btn.classList.remove('hidden');
+        loading.classList.add('hidden');
+    });
+});
+</script>
+{% endblock %}
